@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ultimate Valentine 💖</title>
+<style>
+body {
+  margin:0; padding:0;
+  font-family: Arial, sans-serif;
+  overflow:hidden;
+  background: linear-gradient(135deg,#ffb6c1,#ffe4e1);
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  transition: background 1s;
+}
+#content {
+  position:relative; z-index:2; max-width:500px; text-align:center; color:white;
+}
+button {
+  padding:12px 25px; font-size:18px; border-radius:30px; border:none; cursor:pointer; margin:10px;
+  z-index:3; position:relative; transition:all 0.3s ease;
+}
+#yes { background-color:#ff4d6d; color:white; }
+#no { background-color:#ccc; position:absolute; top:calc(50% + 60px); left:50%; transform:translateX(-50%); }
+canvas { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; }
+.loveText {
+  position:absolute; color:red; font-weight:bold; font-size:28px;
+  text-align:center; user-select:none; pointer-events:none;
+  text-shadow:0 0 10px #ff0000,0 0 20px #ff69b4; z-index:3;
+}
+.corner-emoji {
+  position:absolute; font-size:60px; z-index:2; transition: transform 0.6s ease-in-out;
+}
+#emoji1 { top:10px; left:10px; }
+#emoji2 { top:10px; right:10px; }
+#emoji3 { bottom:10px; left:50%; transform:translateX(-50%); }
+</style>
+</head>
+<body>
+
+<audio id="bgMusic" loop>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<div id="content">
+  <img id="herPhoto" src="herphoto.jpg" alt="Her Photo" style="width:150px;height:150px;border-radius:50%;border:4px solid #ff4d6d;margin-bottom:10px;object-fit:cover;">
+  <h1 id="valText">Will you be my Valentine? 🌹</h1>
+  <button id="yes">YES 💕</button>
+  <button id="no">NO 🙃</button>
+</div>
+
+<div class="corner-emoji" id="emoji1">🐼</div>
+<div class="corner-emoji" id="emoji2">🧸</div>
+<div class="corner-emoji" id="emoji3">🍜</div>
+
+<canvas id="effectCanvas"></canvas>
+
+<script>
+// Music play once
+const music = document.getElementById("bgMusic");
+document.addEventListener("click", ()=>{ music.volume=0.5; music.play() }, {once:true});
+
+// Canvas
+const canvas = document.getElementById("effectCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+let particles = [];
+
+// Particle
+class Particle {
+  constructor(x,y,type,color){
+    this.x=x; this.y=y;
+    this.size=Math.random()*12+5;
+    this.speedY=(type==="heart")?Math.random()*-3-1:Math.random()*-6-2;
+    this.speedX=(Math.random()-0.5)*2;
+    this.opacity=1; this.type=type; this.color=color;
+    this.gravity=(type==="heart")?0.05:0;
+    this.decay=(type==="heart")?0.01:0.008;
+  }
+  update(){ 
+    this.x+=this.speedX; 
+    this.y+=this.speedY; 
+    this.speedY+=this.gravity;
+    this.opacity-=this.decay; 
+  }
+  draw(){
+    ctx.save(); 
+    ctx.globalAlpha=this.opacity; 
+    ctx.fillStyle=this.color; 
+    ctx.beginPath();
+    if(this.type==="heart"){
+      ctx.moveTo(this.x,this.y);
+      ctx.arc(this.x-2,this.y-2,this.size/2,0,Math.PI,true);
+      ctx.arc(this.x+2,this.y-2,this.size/2,0,Math.PI,true);
+      ctx.lineTo(this.x,this.y+this.size); 
+      ctx.fill();
+    } else { 
+      ctx.arc(this.x,this.y,this.size/2,0,2*Math.PI); 
+      ctx.fill(); 
+    }
+    ctx.closePath(); 
+    ctx.restore();
+  }
+}
+function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach((p,i)=>{ p.update(); p.draw(); if(p.opacity<=0) particles.splice(i,1); });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Spawns
+function spawnStars(){for(let i=0;i<20;i++){ let x=Math.random()*canvas.width; let y=Math.random()*50; particles.push(new Particle(x,y,"star","#fff"));}}
+function spawnHeartsBottom(){let x=Math.random()*canvas.width; let y=canvas.height; particles.push(new Particle(x,y,"heart","#ffd700"));}
+function spawnHeartsTopEmojis(){ [document.getElementById("emoji1"),document.getElementById("emoji2"),document.getElementById("emoji3")].forEach(e=>{ const r=e.getBoundingClientRect(); particles.push(new Particle(r.left+25,r.top-10,"heart","#ff69b4")); }); }
+function spawnFireworks(){for(let i=0;i<35;i++){ let x=Math.random()*canvas.width; let y=Math.random()*canvas.height/2; let color=["#ff0000","#00ff00","#00ffff","#ff69b4","#ffff00","#ff8c00","#9400d3"][Math.floor(Math.random()*7)]; particles.push(new Particle(x,y,"glitter",color)); }}
+function loveTextPop(){ 
+  let div=document.createElement("div"); 
+  div.className="loveText"; 
+  div.innerText="I love you 💋 ❤️"; 
+  div.style.left=Math.random()*(window.innerWidth-100)+"px"; 
+  div.style.top=Math.random()*(window.innerHeight-50)+"px"; 
+  document.body.appendChild(div); 
+  setTimeout(()=>{div.remove();},1200); 
+}
+
+// YES click
+const yesBtn=document.getElementById("yes");
+yesBtn.addEventListener("click", ()=>{
+  // Remove old content
+  document.getElementById("content").innerHTML="";
+  document.body.style.background="#000";
+
+  // New photo
+  let photo = document.createElement("img");
+  photo.src="herphoto.jpg";
+  photo.style.width="150px";
+  photo.style.height="150px";
+  photo.style.borderRadius="50%";
+  photo.style.border="4px solid #ff4d6d";
+  photo.style.objectFit="cover";
+  photo.style.marginBottom="10px";
+  document.getElementById("content").appendChild(photo);
+
+  // Message in white
+  let h1 = document.createElement("h1");
+  h1.style.color="white"; 
+  h1.style.marginTop="10px";
+  h1.innerText="I am the happiest man alive 😭❤️ I love you 3000 💋🌹";
+  document.getElementById("content").appendChild(h1);
+
+  // Pop "I love you"
+  let loveCount=0;
+  let loveInterval=setInterval(()=>{ loveTextPop(); loveCount++; if(loveCount>80) clearInterval(loveInterval); },70);
+
+  // Particles
+  setInterval(spawnStars,50);
+  setInterval(spawnHeartsBottom,150);
+  setInterval(spawnFireworks,200);
+  setInterval(spawnHeartsTopEmojis,300);
+});
+
+// NO button
+const noBtn = document.getElementById("no");
+function teleportNo(){
+  const x=Math.random()*(window.innerWidth-120);
+  const y=Math.random()*(window.innerHeight-60);
+  noBtn.style.left=x+"px"; noBtn.style.top=y+"px";
+
+  const hb=document.createElement("div");
+  hb.style.position="absolute"; hb.style.left=Math.random()*(window.innerWidth-50)+"px";
+  hb.style.top=Math.random()*window.innerHeight+"px";
+  hb.style.fontSize="30px"; hb.style.zIndex="3"; hb.innerText="🥺💔";
+  document.body.appendChild(hb);
+  setTimeout(()=>{hb.remove();},1500);
+}
+noBtn.addEventListener("mouseover",teleportNo);
+noBtn.addEventListener("click",teleportNo);
+
+// Floating emojis
+setInterval(()=>{
+  document.getElementById("emoji1").style.transform=`translate(${Math.random()*20-10}px,${Math.random()*20-10}px)`;
+  document.getElementById("emoji2").style.transform=`translate(${Math.random()*20-10}px,${Math.random()*20-10}px)`;
+  document.getElementById("emoji3").style.transform=`translate(${Math.random()*20-10}px,${Math.random()*20-10}px)`;
+},400);
+</script>
+</body>
+</html>
